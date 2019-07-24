@@ -1,0 +1,45 @@
+---
+title: "ANLY 545 Project"
+output: html_document
+Author: "Gun Violence in the US"
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#Load all required packages
+library(tidyverse); library(leaflet); library(rgdal); library(sp); library(readr); library(plotly); library(scales);
+library(kableExtra); library(treemapify); library(expss)
+
+#load the data - set working directory to the data folder first
+gunviolence <- read.csv("gun-violence-data.csv")
+```
+
+## Introduction
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+
+```
+
+## Data Source
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+
+```
+
+## Methodology
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+
+```
+
+## Analysis and Visualization
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+
+```
+
+## Conclusion
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+
+```
