@@ -37,6 +37,19 @@ gunviolence <- read.csv("gun-violence-data.csv")
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE}
 
 ```
+###Gun incident over year
+
+library(ggplot2)
+
+p<-gun_violence%>%
+  ggplot(aes(x=as.factor(year))) + geom_bar(stat='count', fill = 'darkgreen') +
+  scale_y_continuous(labels=comma) +
+  geom_label(stat = "count",aes(label = ..count.., y = ..count..))
+
+p + ggtitle("Gun Incident Over Year") +
+  xlab("Year") + ylab("Number of gun incident")
+```
+
 
 ## Conclusion
 
