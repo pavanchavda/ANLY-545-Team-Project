@@ -47,7 +47,7 @@ p<-gun_violence%>%
   geom_label(stat = "count",aes(label = ..count.., y = ..count..))
 
 p + ggtitle("Gun Incident Over Year") +
-  xlab("Year") + ylab("Number of gun incident")
+  xlab("Year") + ylab("Number of gun incidents")
 ```
 
 
