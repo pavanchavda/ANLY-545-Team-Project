@@ -48,6 +48,49 @@ p<-gun_violence%>%
 
 p + ggtitle("Gun Incident Over Year") +
   xlab("Year") + ylab("Number of gun incidents")
+  
+##It seems the incidents in 2013 are not recorded, and there are only Q1 is available in 2018.
+##We will exclude 2013 since we want to see the tendency over year. 
+
+###By quater
+
+gunviolence$quarter <- quarter(gunviolence$date) #extract Quarters from date
+
+q1 <- gunviolence %>% filter(year!=2013) %>% select(year, quarter) %>% group_by(year) %>% count(quarter) %>%
+  ggplot(aes(x=as.factor(quarter), y=n)) + geom_bar(stat='identity', fill='darkgreen') +
+  scale_y_continuous(labels=comma) + facet_grid(.~year) + labs(x='Quarter', y='Number of incidents')
+
+q1
+
+###By month
+
+gunviolence$month <- month(gunviolence$date, label=TRUE)
+
+#only taking the complete years 2014-2017
+
+install.packages("plotly")
+library(plotly)
+plotly::ggplotly(gunviolence %>% filter(year!=c(2013, 2018)) %>% count(month) %>%
+                   ggplot(aes(x=month, y=n)) + geom_bar(stat='identity', fill='darkgreen') +
+                   scale_y_continuous(labels=comma) +
+                   labs(x='Month', y='Number of incidents', title='Incidents by Month'))
+
+
+######Gun violence by incident
+######Analyzing the Incident Characteristics
+####Top 10 Incident Characteristics (we can do top 1-30 as well)
+
+gunviolence$incident_characteristics <- gsub("\\|\\|", "|", gunviolence$incident_characteristics)
+
+install.packages("splitstackshape")
+library(splitstackshape)
+
+IncCharac <- splitstackshape::cSplit(gunviolence %>% select(incident_id, state, city_or_county, incident_characteristics), 'incident_characteristics', sep =  '|', direction="long")
+
+IncCharac %>% count(incident_characteristics) %>% top_n(10, wt=n) %>%
+  ggplot(aes(x=reorder(incident_characteristics, n), y=n)) +
+  geom_bar(stat='identity', fill='red') +
+  coord_flip() + labs(x='Incident Category', y='number of incidents')
 ```
 
 
