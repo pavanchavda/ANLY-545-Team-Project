@@ -74,6 +74,41 @@ plotly::ggplotly(gunviolence %>% filter(year!=c(2013, 2018)) %>% count(month) %>
                    ggplot(aes(x=month, y=n)) + geom_bar(stat='identity', fill='darkgreen') +
                    scale_y_continuous(labels=comma) +
                    labs(x='Month', y='Number of incidents', title='Incidents by Month'))
+                   
+                   
+                   
+###Injured / killed by year
+####For this section, I could not filetr year...
+
+ggplot(pp,aes(gunviolence$year, gunviolence$n_injured)) +
+  geom_col()
+
+####injured by quarter
+
+ggplot(gunviolence, aes(gunviolence$quarter, gunviolence$n_injured)) +
+  geom_col()
+
+####injured by month
+
+ggplot(gunviolence, aes(gunviolence$month, gunviolence$n_injured)) +
+  geom_col()
+
+###killed by year
+
+ggplot(gunviolence, aes(gunviolence$year, gunviolence$n_killed)) +
+  geom_col()
+
+###killed by quarter
+
+ggplot(gunviolence, aes(gunviolence$quarter, gunviolence$n_killed)) +
+  geom_col()
+
+####Killed by month
+
+ggplot(gunviolence, aes(gunviolence$month, gunviolence$n_killed)) + 
+  geom_col()
+
+
 
 
 ######Gun violence by incident
