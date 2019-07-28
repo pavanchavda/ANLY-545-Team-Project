@@ -37,18 +37,40 @@ gunviolence <- read.csv("gun-violence-data.csv")
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE}
 
 ```
+
+##Number of variables
+glimpse(gun_violence)
+summary(gun_violence)
+
+###Check if there is any missing data
+is.na(gun_violence)
+
+##Omit missing data
+gunviolence <- na.omit(gun_violence)
+is.na(gunviolence)
+
+#Create Year column 
+
+gunviolence$date = as.Date(gunviolence$date, "%Y-%m-%d")
+
+#then extract year from date using following command
+
+gunviolence$year = as.numeric(format(gunviolence$date, "%Y"))
+
 ###Gun incident over year
 
 library(ggplot2)
+library(plotly)
 
-p<-gun_violence%>%
+p<-gunviolence%>%
   ggplot(aes(x=as.factor(year))) + geom_bar(stat='count', fill = 'darkgreen') +
   scale_y_continuous(labels=comma) +
   geom_label(stat = "count",aes(label = ..count.., y = ..count..))
 
-p + ggtitle("Gun Incident Over Year") +
-  xlab("Year") + ylab("Number of gun incidents")
-  
+p1<-p + ggtitle("Gun Incident Over Year") + xlab("Year") + ylab("Number of gun incidents")
+
+ggplotly(p1)
+
 ##It seems the incidents in 2013 are not recorded, and there are only Q1 is available in 2018.
 ##We will exclude 2013 since we want to see the tendency over year. 
 
@@ -60,7 +82,7 @@ q1 <- gunviolence %>% filter(year!=2013) %>% select(year, quarter) %>% group_by(
   ggplot(aes(x=as.factor(quarter), y=n)) + geom_bar(stat='identity', fill='darkgreen') +
   scale_y_continuous(labels=comma) + facet_grid(.~year) + labs(x='Quarter', y='Number of incidents')
 
-q1
+ggplotly(q1)
 
 ###By month
 
@@ -70,46 +92,53 @@ gunviolence$month <- month(gunviolence$date, label=TRUE)
 
 install.packages("plotly")
 library(plotly)
+
+
 plotly::ggplotly(gunviolence %>% filter(year!=c(2013, 2018)) %>% count(month) %>%
                    ggplot(aes(x=month, y=n)) + geom_bar(stat='identity', fill='darkgreen') +
                    scale_y_continuous(labels=comma) +
                    labs(x='Month', y='Number of incidents', title='Incidents by Month'))
-                   
-                   
-                   
-###Injured / killed by year
-####For this section, I could not filetr year...
 
-ggplot(pp,aes(gunviolence$year, gunviolence$n_injured)) +
-  geom_col()
+
+###Injured / killed by year
+
+
+ggplot(gunviolence,aes(gunviolence$year, gunviolence$n_injured)) + geom_col()+
+  geom_bar(stat ='identity', fill='blue')+
+  labs(x='year', y='Number of injuried', title='Injuried by year')
+
 
 ####injured by quarter
 
 ggplot(gunviolence, aes(gunviolence$quarter, gunviolence$n_injured)) +
-  geom_col()
+  geom_col() + 
+  geom_bar(stat ='identity', fill='blue')+
+  labs(x='Quarter', y='Number of injured')
 
 ####injured by month
 
 ggplot(gunviolence, aes(gunviolence$month, gunviolence$n_injured)) +
-  geom_col()
+  geom_col() + 
+  geom_bar(stat ='identity', fill='blue')+
+  labs(x='month', y='Number of injured')
 
 ###killed by year
 
-ggplot(gunviolence, aes(gunviolence$year, gunviolence$n_killed)) +
-  geom_col()
+ggplot(gunviolence,aes(gunviolence$year, gunviolence$n_killed)) + geom_col()+
+  geom_bar(stat ='identity', fill='red')+
+  labs(x='year', y='Number of killed', title='killed by year')
 
 ###killed by quarter
 
-ggplot(gunviolence, aes(gunviolence$quarter, gunviolence$n_killed)) +
-  geom_col()
+ggplot(gunviolence,aes(gunviolence$quarter, gunviolence$n_killed)) + geom_col()+
+  geom_bar(stat ='identity', fill='red')+
+  labs(x='quarter', y='Number of killed', title='killed by quarter')
 
 ####Killed by month
 
-ggplot(gunviolence, aes(gunviolence$month, gunviolence$n_killed)) + 
-  geom_col()
-
-
-
+ggplot(gunviolence,aes(gunviolence$month, gunviolence$n_killed)) + geom_col()+
+  geom_bar(stat = 'identity' , fill="red") +
+  labs(x='month', y='Number of killed', title='killed by month')
 
 ######Gun violence by incident
 ######Analyzing the Incident Characteristics
@@ -126,7 +155,6 @@ IncCharac %>% count(incident_characteristics) %>% top_n(10, wt=n) %>%
   ggplot(aes(x=reorder(incident_characteristics, n), y=n)) +
   geom_bar(stat='identity', fill='red') +
   coord_flip() + labs(x='Incident Category', y='number of incidents')
-```
 
 
 ## Conclusion
