@@ -8,46 +8,27 @@ Author: "Gun Violence in the US"
 knitr::opts_chunk$set(echo = TRUE)
 #Load all required packages
 library(tidyverse); library(leaflet); library(rgdal); library(sp); library(readr); library(plotly); library(scales);
-library(kableExtra); library(treemapify); library(expss)
+library(kableExtra); library(treemapify); library(expss); library(splitstackshape); library(ggplot2); library(lubridate)
 
 #load the data - set working directory to the data folder first
-gunviolence <- read.csv("gun-violence-data.csv")
+gunviolence <- read.csv("gun-violence-data_01-2013_03-2018.csv")
 ```
 
 ## Introduction
 
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+```{r warning=FALSE, error=FALSE}
 
 ```
 
 ## Data Source
 
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
-
-```
-
-## Methodology
-
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
-
-```
-
-## Analysis and Visualization
-
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
-
-```
-
+```{r warning=FALSE, error=FALSE}
 ##Number of variables
-glimpse(gun_violence)
-summary(gun_violence)
-
-###Check if there is any missing data
-is.na(gun_violence)
+glimpse(gunviolence)
+summary(gunviolence)
 
 ##Omit missing data
-gunviolence <- na.omit(gun_violence)
-is.na(gunviolence)
+gunviolence <- na.omit(gunviolence)
 
 #Create Year column 
 
@@ -56,11 +37,20 @@ gunviolence$date = as.Date(gunviolence$date, "%Y-%m-%d")
 #then extract year from date using following command
 
 gunviolence$year = as.numeric(format(gunviolence$date, "%Y"))
+```
+
+## Methodology
+
+```{r warning=FALSE, error=FALSE}
+
+```
+
+## Analysis and Visualization
+
+```{r warning=FALSE, error=FALSE}
+
 
 ###Gun incident over year
-
-library(ggplot2)
-library(plotly)
 
 p<-gunviolence%>%
   ggplot(aes(x=as.factor(year))) + geom_bar(stat='count', fill = 'darkgreen') +
@@ -70,11 +60,11 @@ p<-gunviolence%>%
 p1<-p + ggtitle("Gun Incident Over Year") + xlab("Year") + ylab("Number of gun incidents")
 
 ggplotly(p1)
-
-##It seems the incidents in 2013 are not recorded, and there are only Q1 is available in 2018.
-##We will exclude 2013 since we want to see the tendency over year. 
+```
 
 ###By quater
+It seems the incidents in 2013 are not recorded, and there are only Q1 is available in 2018. We will exclude 2013 since we want to see the tendency over year. 
+```{r warning=FALSE, error=FALSE}
 
 gunviolence$quarter <- quarter(gunviolence$date) #extract Quarters from date
 
@@ -83,30 +73,23 @@ q1 <- gunviolence %>% filter(year!=2013) %>% select(year, quarter) %>% group_by(
   scale_y_continuous(labels=comma) + facet_grid(.~year) + labs(x='Quarter', y='Number of incidents')
 
 ggplotly(q1)
+```
 
-###By month
-
+```{r warning=FALSE, error=FALSE}
 gunviolence$month <- month(gunviolence$date, label=TRUE)
-
+###By month
 #only taking the complete years 2014-2017
-
-install.packages("plotly")
-library(plotly)
-
 
 plotly::ggplotly(gunviolence %>% filter(year!=c(2013, 2018)) %>% count(month) %>%
                    ggplot(aes(x=month, y=n)) + geom_bar(stat='identity', fill='darkgreen') +
                    scale_y_continuous(labels=comma) +
                    labs(x='Month', y='Number of incidents', title='Incidents by Month'))
 
-
 ###Injured / killed by year
-
 
 ggplot(gunviolence,aes(gunviolence$year, gunviolence$n_injured)) + geom_col()+
   geom_bar(stat ='identity', fill='blue')+
   labs(x='year', y='Number of injuried', title='Injuried by year')
-
 
 ####injured by quarter
 
@@ -139,15 +122,17 @@ ggplot(gunviolence,aes(gunviolence$quarter, gunviolence$n_killed)) + geom_col()+
 ggplot(gunviolence,aes(gunviolence$month, gunviolence$n_killed)) + geom_col()+
   geom_bar(stat = 'identity' , fill="red") +
   labs(x='month', y='Number of killed', title='killed by month')
+```
 
-######Gun violence by incident
-######Analyzing the Incident Characteristics
-####Top 10 Incident Characteristics (we can do top 1-30 as well)
+##Gun violence by incident
 
+##Analyzing the Incident Characteristics
+
+##Top 10 Incident Characteristics (we can do top 1-30 as well)
+
+```{r warning=FALSE, error=FALSE}
 gunviolence$incident_characteristics <- gsub("\\|\\|", "|", gunviolence$incident_characteristics)
 
-install.packages("splitstackshape")
-library(splitstackshape)
 
 IncCharac <- splitstackshape::cSplit(gunviolence %>% select(incident_id, state, city_or_county, incident_characteristics), 'incident_characteristics', sep =  '|', direction="long")
 
@@ -155,10 +140,107 @@ IncCharac %>% count(incident_characteristics) %>% top_n(10, wt=n) %>%
   ggplot(aes(x=reorder(incident_characteristics, n), y=n)) +
   geom_bar(stat='identity', fill='red') +
   coord_flip() + labs(x='Incident Category', y='number of incidents')
+```
 
+
+#No. of incidents by State
+```{r warning=FALSE, error=FALSE}
+
+incidents_by_state <- gunviolence %>%
+  group_by(state) %>%
+  summarise(total_incidents = n(),
+            total_injured = sum(n_injured),
+            total_killed = sum(n_killed)) %>%
+  arrange(desc(total_injured,total_killed))
+  
+statesUS <- readOGR("tl_2018_us_state", layer = "tl_2018_us_state", GDAL1_integer64_policy = TRUE)
+incidents_by_state2 <- merge(statesUS, incidents_by_state, by.x="NAME", by.y="state")
+bins <- c(0, 5000, 7500, 10000, 15000, 20000)
+pal <- colorBin("YlOrRd", domain = incidents_by_state2$total_incidents, bins = bins)
+
+labels <- paste0("<strong>State: </strong>", 
+                 incidents_by_state2$NAME, 
+                 "<br><strong>Total Incidents </strong>", 
+                 incidents_by_state2$total_incidents,
+                 "<br><strong>Total Injured </strong>", 
+                 incidents_by_state2$total_injured,
+                 "<br><strong>Total Killed </strong>", 
+                 incidents_by_state2$total_killed) %>% lapply(htmltools::HTML)
+
+leaflet(data = incidents_by_state2) %>%
+  setView(-96, 37.8, 4) %>%
+  addTiles() %>%
+  addProviderTiles("MapBox", options = providerTileOptions(id = "mapbox.light",accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>%
+    addPolygons(
+    fillColor = ~pal(total_incidents),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlight = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),
+    label = labels,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "15px",
+      direction = "auto")) %>%
+  addLegend(pal = pal, values = ~total_incidents, opacity = 0.7, title = "Total Incidents", position = "bottomright")
+```
+
+#No. of Deaths by State
+```{r warning=FALSE, error=FALSE}
+deaths_by_state <- gunviolence %>%
+  group_by(state) %>%
+  summarise(total_killed = sum(n_killed)) %>%
+  arrange(desc(total_killed))
+
+g1 <- ggplot(deaths_by_state, aes(x=reorder(state, total_killed),y=total_killed, fill=  total_killed, text=state)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  scale_fill_gradient(low="yellow", high = "red")+
+  labs(x="State" , y = "Number of Deaths") +
+  theme_classic()
+ggplotly(g1)
+```
+
+#Top 10 states with highest gun incidents
+```{r warning=FALSE, error=FALSE}
+top10_by_state <- gunviolence %>%
+  group_by(state=state) %>%
+  summarise(total_incidents = n(),
+            total_injured = sum(n_injured),
+            total_killed = sum(n_killed)) %>%
+  arrange(desc(total_injured,total_killed)) %>%
+  top_n(10, total_incidents)
+
+g2 <- ggplot(top10_by_state, aes(x=reorder(state,total_incidents), y=total_incidents, text=state))+
+  geom_bar(stat="identity", fill="red") + 
+  coord_flip() +
+  labs(x="State", y="Number of Incidents", title = "Top 10 States with Highest Gun Incidents")
+ggplotly(g2)
+```
+
+#Top 10 cities with highest gun incidents
+```{r warning=FALSE, error=FALSE}
+top10_by_city <- gunviolence %>%
+  group_by(city=city_or_county) %>%
+  summarise(total_incidents = n(),
+            total_injured = sum(n_injured),
+            total_killed = sum(n_killed)) %>%
+  arrange(desc(total_injured,total_killed)) %>%
+  top_n(10, total_incidents)
+
+g3 <- ggplot(top10_by_city, aes(x=reorder(city,total_incidents), y=total_incidents, text=city))+
+  geom_bar(stat="identity", fill="red") + 
+  coord_flip() +
+  labs(x="City", y="Number of Incidents", title = "Top 10 Cities with Highest Gun Incidents")
+ggplotly(g3)
+```
 
 ## Conclusion
 
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
-
-```
